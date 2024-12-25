@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Repository Updates</title>
+    <style>
+        :root {
+            --primary-color: #0366d6;
+            --text-color: #24292e;
+            --border-color: #e1e4e8;
+            --bg-color: #ffffff;
+            --header-bg: #f6f8fa;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", 
+                         Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+        }
+        
+        .header {
+            background-color: var(--header-bg);
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            color: var(--text-color);
+        }
+        
+        .header .timestamp {
+            color: #586069;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .update-item {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .update-item:hover {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .update-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+        }
+        
+        .update-title a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .update-title a:hover {
+            text-decoration: underline;
+        }
+        
+        .update-meta {
+            font-size: 14px;
+            color: #586069;
+            margin-bottom: 10px;
+        }
+        
+        .update-meta span {
+            margin-right: 16px;
+        }
+        
+        .update-content {
+            background-color: var(--header-bg);
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 10px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-open {
+            background-color: #2cbe4e;
+            color: white;
+        }
+        
+        .status-closed {
+            background-color: #cb2431;
+            color: white;
+        }
+        
+        .status-merged {
+            background-color: #6f42c1;
+            color: white;
+        }
+        
+        .label {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+            background-color: var(--header-bg);
+            margin-right: 4px;
+        }
+        
+        .statistics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background-color: var(--header-bg);
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #586069;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>GitHub Repository Updates</h1>
+        <div class="timestamp">Generated at: {{ generated_at | format_date }}</div>
+    </div>
+    
+    {% if config.include_statistics %}
+    <div class="statistics">
+        {% for type_name, updates in updates.items() %}
+        <div class="stat-card">
+            <div class="stat-number">{{ updates | length }}</div>
+            <div class="stat-label">{{ type_name | title }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% for section in config.sections %}
+        {% if section in updates %}
+        <div class="section">
+            <h2 class="section-title">{{ section | title }}</h2>
+            
+            {% for update in updates[section][:config.max_items_per_section] %}
+                <div class="update-item">
+                    {% if section == 'commits' %}
+                        <h3 class="update-title">{{ update.title }}</h3>
+                        <div class="update-meta">
+                            <span>Author: {{ update.author }}</span>
+                            <span>Date: {{ update.date | format_date }}</span>
+                            <span>Hash: <a href="{{ update.url }}">{{ update.id[:7] }}</a></span>
+                        </div>
+                        <div class="update-content">{{ update.message }}</div>
+                        
+                    {% elif section == 'pull_requests' %}
+                        <h3 class="update-title"><a href="{{ update.url }}">{{ update.title }}</a></h3>
+                        <div class="update-meta">
+                            <span class="status {% if update.is_merged %}status-merged{% elif update.state == 'open' %}status-open{% else %}status-closed{% endif %}">
+                                {% if update.is_merged %}Merged{% elif update.state == 'open' %}Open{% else %}Closed{% endif %}
+                            </span>
+                            <span>Author: {{ update.author }}</span>
+                            <span>Created: {{ update.date | format_date }}</span>
+                            <span>Updated: {{ update.updated_at | format_date }}</span>
+                        </div>
+                        <div class="update-meta">
+                            Branch: <code>{{ update.head }}</code> → <code>{{ update.base }}</code>
+                        </div>
+                        
+                    {% elif section == 'issues' %}
+                        <h3 class="update-title"><a href="{{ update.url }}">{{ update.title }}</a></h3>
+                        <div class="update-meta">
+                            <span class="status {% if update.state == 'open' %}status-open{% else %}status-closed{% endif %}">
+                                {{ update.state | title }}
+                            </span>
+                            <span>Author: {{ update.author }}</span>
+                            <span>Created: {{ update.date | format_date }}</span>
+                            <span>Updated: {{ update.updated_at | format_date }}</span>
+                        </div>
+                        {% if update.labels %}
+                        <div class="update-meta">
+                            Labels: 
+                            {% for label in update.labels %}
+                                <span class="label">{{ label }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                    {% elif section == 'releases' %}
+                        <h3 class="update-title"><a href="{{ update.url }}">{{ update.title }}</a></h3>
+                        <div class="update-meta">
+                            <span>Tag: {{ update.tag_name }}</span>
+                            <span>Author: {{ update.author }}</span>
+                            <span>Date: {{ update.date | format_date }}</span>
+                            <span>Type: {% if update.is_prerelease %}Pre-release{% else %}Release{% endif %}</span>
+                        </div>
+                        {% if update.body %}
+                        <div class="update-content">{{ update.body }}</div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endfor %}
+</body>
+</html> 

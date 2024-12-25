@@ -1,0 +1,63 @@
+# GitHub API Configuration
+github:
+  api_token: "your_github_token_here"
+  api_version: "2022-11-28"
+
+# Database Configuration
+database:
+  type: "sqlite"  # or "postgresql"
+  path: "data/sentinel.db"  # for sqlite
+  # postgresql_url: "postgresql://user:password@localhost:5432/dbname"  # for postgresql
+
+# Subscription Settings
+subscriptions:
+  update_interval: "daily"  # or "weekly"
+  check_time: "09:00"  # 24-hour format
+  repositories:
+    - owner: "owner1"
+      repo: "repo1"
+      track:
+        - "commits"
+        - "issues"
+        - "pull_requests"
+        - "releases"
+    - owner: "owner2"
+      repo: "repo2"
+      track:
+        - "commits"
+        - "issues"
+
+# Notification Settings
+notifications:
+  email:
+    enabled: true
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    username: "your_email@gmail.com"
+    password: "your_app_password"
+    recipients:
+      - "recipient1@example.com"
+      - "recipient2@example.com"
+  
+  slack:
+    enabled: false
+    webhook_url: "your_slack_webhook_url"
+    channel: "#github-updates"
+
+# Report Generation
+reports:
+  format: "markdown"  # or "html"
+  include_statistics: true
+  max_items_per_section: 10
+  sections:
+    - commits
+    - pull_requests
+    - issues
+    - releases
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  file: "logs/sentinel.log"
+  max_size: 10  # MB
+  backup_count: 5 
