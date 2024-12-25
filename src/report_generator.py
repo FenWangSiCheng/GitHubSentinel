@@ -4,6 +4,7 @@ from datetime import datetime
 from collections import defaultdict
 import jinja2
 from pathlib import Path
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -18,19 +19,11 @@ class ReportGenerator:
         self.config = config
         self.template_env = self._setup_template_env()
         
-    def _setup_template_env(self) -> jinja2.Environment:
-        """设置Jinja2模板环境"""
-        template_loader = jinja2.PackageLoader('github_sentinel', 'templates')
-        env = jinja2.Environment(
-            loader=template_loader,
-            autoescape=True,
-            trim_blocks=True,
-            lstrip_blocks=True
-        )
-        
-        # 添加自定义过滤器
-        env.filters['format_date'] = lambda d: d.strftime('%Y-%m-%d %H:%M:%S')
-        return env
+    def _setup_template_env(self):
+        """设置 Jinja2 模板环境"""
+        template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates')
+        template_loader = jinja2.FileSystemLoader(template_dir)
+        return jinja2.Environment(loader=template_loader)
         
     def generate_report(self, updates: List[Dict[str, Any]]) -> str:
         """
@@ -82,13 +75,17 @@ class ReportGenerator:
         生成Markdown格式的报告
         
         Args:
-            grouped_updates: 分组后的���新
+            grouped_updates: 分组后的更新
             
         Returns:
             str: Markdown格式的报告
         """
-        sections = self.config.get('sections', ['commits', 'pull_requests', 'issues', 'releases'])
-        max_items = self.config.get('max_items_per_section', 10)
+        # 打印调试信息
+        logger.info("Grouped updates:")
+        for section, updates in grouped_updates.items():
+            logger.info(f"{section}: {len(updates)} updates")
+            if updates:
+                logger.info(f"First update in {section}: {updates[0]}")
         
         report = ["# GitHub Repository Updates\n"]
         report.append(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -99,19 +96,19 @@ class ReportGenerator:
                 report.append(f"- {type_name.title()}: {len(updates)} updates\n")
             report.append("\n")
             
-        for section in sections:
-            if section in grouped_updates:
-                updates = grouped_updates[section][:max_items]
-                report.append(f"## {section.title()}\n")
+        # 按类型生成详细报告
+        for type_name, updates in grouped_updates.items():
+            if updates:
+                report.append(f"## Recent {type_name.title()}\n")
                 
-                for update in updates:
-                    if section == 'commits':
+                for update in updates[:10]:  # 最多显示10个更新
+                    if type_name == 'commit':
                         report.extend(self._format_commit(update))
-                    elif section == 'pull_requests':
+                    elif type_name == 'pull_request':
                         report.extend(self._format_pull_request(update))
-                    elif section == 'issues':
+                    elif type_name == 'issue':
                         report.extend(self._format_issue(update))
-                    elif section == 'releases':
+                    elif type_name == 'release':
                         report.extend(self._format_release(update))
                         
                 report.append("\n")
@@ -141,9 +138,9 @@ class ReportGenerator:
     def _format_commit(self, commit: Dict[str, Any]) -> List[str]:
         """格式化提交信息"""
         return [
-            f"### {commit['title']}\n",
-            f"**Author:** {commit['author']}  ",
-            f"**Date:** {commit['date'].strftime('%Y-%m-%d %H:%M:%S')}  ",
+            f"### [{commit['title']}]({commit['url']})\n",
+            f"**Author:** {commit['author']}  \n",
+            f"**Date:** {commit['date'].strftime('%Y-%m-%d %H:%M:%S')}  \n",
             f"**Hash:** [{commit['id'][:7]}]({commit['url']})\n",
             f"```\n{commit['message']}\n```\n"
         ]
@@ -155,11 +152,11 @@ class ReportGenerator:
         )
         return [
             f"### [{pr['title']}]({pr['url']})\n",
-            f"**Status:** {status}  ",
-            f"**Author:** {pr['author']}  ",
-            f"**Created:** {pr['date'].strftime('%Y-%m-%d %H:%M:%S')}  ",
-            f"**Updated:** {pr['updated_at'].strftime('%Y-%m-%d %H:%M:%S')}\n",
-            f"**Branch:** `{pr['head']}` → `{pr['base']}`\n"
+            f"**Status:** {status}  \n",
+            f"**Author:** {pr['author']}  \n",
+            f"**Created:** {pr['date'].strftime('%Y-%m-%d %H:%M:%S')}  \n",
+            f"**Updated:** {pr['updated_at'].strftime('%Y-%m-%d %H:%M:%S')}  \n",
+            f"**Branch:** `{pr['head']}` → `{pr['base']}`\n\n"
         ]
         
     def _format_issue(self, issue: Dict[str, Any]) -> List[str]:
@@ -168,20 +165,20 @@ class ReportGenerator:
         labels = ", ".join(f"`{label}`" for label in issue['labels'])
         return [
             f"### [{issue['title']}]({issue['url']})\n",
-            f"**Status:** {status}  ",
-            f"**Author:** {issue['author']}  ",
-            f"**Created:** {issue['date'].strftime('%Y-%m-%d %H:%M:%S')}  ",
-            f"**Updated:** {issue['updated_at'].strftime('%Y-%m-%d %H:%M:%S')}\n",
-            f"**Labels:** {labels}\n" if labels else "\n"
+            f"**Status:** {status}  \n",
+            f"**Author:** {issue['author']}  \n",
+            f"**Created:** {issue['date'].strftime('%Y-%m-%d %H:%M:%S')}  \n",
+            f"**Updated:** {issue['updated_at'].strftime('%Y-%m-%d %H:%M:%S')}  \n",
+            f"**Labels:** {labels}\n\n" if labels else "\n"
         ]
         
     def _format_release(self, release: Dict[str, Any]) -> List[str]:
         """格式化发布信息"""
         return [
             f"### [{release['title']}]({release['url']})\n",
-            f"**Tag:** {release['tag_name']}  ",
-            f"**Author:** {release['author']}  ",
-            f"**Date:** {release['date'].strftime('%Y-%m-%d %H:%M:%S')}  ",
-            f"**Type:** {'Pre-release' if release['is_prerelease'] else 'Release'}\n",
-            f"{release['body']}\n" if release['body'] else "\n"
+            f"**Tag:** {release['tag_name']}  \n",
+            f"**Author:** {release['author']}  \n",
+            f"**Date:** {release['date'].strftime('%Y-%m-%d %H:%M:%S')}  \n",
+            f"**Type:** {'Pre-release' if release['is_prerelease'] else 'Release'}\n\n",
+            f"{release['body']}\n\n" if release['body'] else "\n"
         ] 

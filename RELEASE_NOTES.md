@@ -1,88 +1,45 @@
 # Release Notes
 
-## v0.0.1 (2024-01-20)
+## v0.1 - Initial Release (2024-12-25)
 
-🎉 First release of GitHub Sentinel! This version establishes the core functionality framework and lays the foundation for future feature expansions.
+First release of GitHub Sentinel, an interactive tool for monitoring GitHub repository updates.
 
-### ✨ New Features
+### Features
 
-#### Core Functionality
-- 🔄 Implemented GitHub API integration for repository update tracking
-- 📊 Support for monitoring commits, issues, pull requests, and releases
-- 🎯 Flexible repository subscription management system
-- 💾 Data persistence using SQLite/PostgreSQL
+- **Interactive Shell**: A command-line interface with interactive shell for better user experience
+- **Real-time Monitoring**: Watch GitHub repositories for updates in real-time
+- **Flexible Configuration**: Easy configuration management through interactive commands
+- **Repository Management**: Add/remove repositories to monitor with customizable tracking items
+- **Comprehensive Updates**: Track multiple types of updates:
+  - Commits
+  - Pull Requests
+  - Issues
+  - Releases
+- **Scheduled Checks**: Configurable scheduled checks (daily/weekly) at specified times
+- **Immediate Updates**: On-demand update checks
+- **Detailed Reports**: Well-formatted reports in Markdown format
+- **Background Service**: Watch service runs in background while keeping shell interactive
 
-#### Notification System
-- 📧 Email notification support
-- 💬 Slack integration
-- ⚡ Asynchronous notification processing
+### Commands
 
-#### Report Generation
-- 📝 Markdown format report support
-- 🌐 HTML format reports with beautiful styling
-- 📊 Update statistics included
-- 🔍 Detailed update content display
+- `check` - Check updates immediately
+- `watch` - Start watch service in background
+- `stop` - Stop watch service
+- `config`
+  - `config list` - List current configuration
+  - `config set <key> <value>` - Update configuration
+- `repo`
+  - `repo list` - List monitored repositories
+  - `repo add <owner> <repo> [--track items...]` - Add repository to monitor
+  - `repo remove <owner> <repo>` - Remove repository from monitoring
+- `status` - Show current system status
+- `exit` - Exit the program (also supports Ctrl-D)
 
-### 🛠 Technical Implementation
+### Technical Details
 
-- Modular design with separated core functionalities:
-  - `github_client.py`: GitHub API interaction
-  - `subscription_manager.py`: Subscription management
-  - `update_tracker.py`: Update tracking
-  - `notification_service.py`: Notification services
-  - `report_generator.py`: Report generation
-
-- Configuration System:
-  - YAML format configuration files
-  - Environment variable support
-  - Flexible logging system
-
-### 📝 Documentation
-
-- Detailed README.md
-- Configuration file examples
-- Comprehensive code comments
-
-### 🐛 Known Issues
-
-- No support for GitHub Enterprise yet
-- Notification retry mechanism needs improvement
-- Performance optimization needed for large data volumes
-
-### 📋 Roadmap
-
-- [ ] Add Web management interface
-- [ ] Support for more notification channels (Discord, Telegram, etc.)
-- [ ] Add detailed data analysis features
-- [ ] Optimize performance and resource usage
-- [ ] Add unit tests and integration tests
-- [ ] Add Docker deployment support
-
-### 🔧 Requirements
-
-- Python 3.8+
-- pip package manager
-- GitHub API token
-- (Optional) PostgreSQL database
-- (Optional) SMTP server or Slack Webhook
-
-### 📦 Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/github-sentinel.git
-cd github-sentinel
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Configure:
-- Copy `config/config.example.yaml` to `config/config.yaml`
-- Set required configuration items (GitHub token, etc.)
-
-### 🙏 Acknowledgments
-
-Thanks to all developers who provided suggestions and feedback for this project. 
+- Built with Python 3.8+
+- Uses GitHub API v3
+- Asynchronous operations for better performance
+- Local SQLite database for update tracking
+- YAML-based configuration
+- Modular architecture for easy extension 

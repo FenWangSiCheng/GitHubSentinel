@@ -1,10 +1,10 @@
 import logging
 import smtplib
+import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Dict, Any, List
-import aiohttp
-from pathlib import Path
+from slack_sdk.web.async_client import AsyncWebClient
 
 logger = logging.getLogger(__name__)
 
@@ -20,31 +20,47 @@ class NotificationService:
         self.email_config = config.get('email', {})
         self.slack_config = config.get('slack', {})
         
-    async def send_notifications(self, report: str):
+    async def send_notifications(self, content: str) -> None:
         """
         发送通知
         
         Args:
-            report: 更新报告内容
+            content: 通知内容
         """
         tasks = []
         
         if self.email_config.get('enabled', False):
-            tasks.append(self._send_email_notification(report))
+            tasks.append(self._send_email(content))
             
         if self.slack_config.get('enabled', False):
-            tasks.append(self._send_slack_notification(report))
+            tasks.append(self._send_slack(content))
             
-        # 并行发送所有通知
-        async with aiohttp.ClientSession() as session:
+        if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
             
-    async def _send_email_notification(self, report: str):
+    async def send_error_notification(self, error_message: str) -> None:
+        """
+        发送错误通知
+        
+        Args:
+            error_message: 错误信息
+        """
+        error_report = f"""
+# Error Report
+An error occurred during the update check:
+
+```
+{error_message}
+```
+"""
+        await self.send_notifications(error_report)
+        
+    async def _send_email(self, content: str) -> None:
         """
         发送邮件通知
         
         Args:
-            report: 更新报告内容
+            content: 通知内容
         """
         try:
             # 创建邮件
@@ -54,8 +70,8 @@ class NotificationService:
             msg['To'] = ', '.join(self.email_config['recipients'])
             
             # 添加纯文本和HTML版本
-            text_part = MIMEText(report, 'plain')
-            html_part = MIMEText(self._convert_markdown_to_html(report), 'html')
+            text_part = MIMEText(content, 'plain')
+            html_part = MIMEText(self._convert_markdown_to_html(content), 'html')
             msg.attach(text_part)
             msg.attach(html_part)
             
@@ -77,19 +93,19 @@ class NotificationService:
             logger.error(f"Failed to send email notification: {e}")
             raise
             
-    async def _send_slack_notification(self, report: str):
+    async def _send_slack(self, content: str) -> None:
         """
         发送Slack通知
         
         Args:
-            report: 更新报告内容
+            content: 通知内容
         """
         try:
             webhook_url = self.slack_config['webhook_url']
             channel = self.slack_config['channel']
             
             # 将报告分块，确保不超过Slack消息长度限制
-            chunks = self._chunk_message(report, max_length=3000)
+            chunks = self._chunk_message(content, max_length=3000)
             
             async with aiohttp.ClientSession() as session:
                 for i, chunk in enumerate(chunks, 1):
@@ -110,27 +126,6 @@ class NotificationService:
             logger.error(f"Failed to send Slack notification: {e}")
             raise
             
-    async def send_error_notification(self, error_message: str):
-        """
-        发送错误通知
-        
-        Args:
-            error_message: 错误信息
-        """
-        error_report = f"""
-        ⚠️ GitHub Sentinel Error Report
-        
-        An error occurred while processing repository updates:
-        
-        ```
-        {error_message}
-        ```
-        
-        Please check the logs for more details.
-        """
-        
-        await self.send_notifications(error_report)
-        
     def _convert_markdown_to_html(self, markdown_text: str) -> str:
         """
         将Markdown转换为HTML
