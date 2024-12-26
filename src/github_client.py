@@ -75,22 +75,26 @@ class GitHubClient:
         since: datetime
     ) -> List[Dict[str, Any]]:
         """获取提交更新"""
-        commits = list(repo.get_commits(since=since)[:self.max_items])
-        updates = [
-            {
-                'type': 'commit',
-                'id': commit.sha,
-                'title': commit.commit.message.split('\n')[0],
-                'message': commit.commit.message,
-                'author': commit.commit.author.name,
-                'date': commit.commit.author.date,
-                'url': commit.html_url
-            }
-            for commit in commits
-            if commit.commit.author.date >= since
-        ]
-        logger.info(f"Found {len(updates)} new commits")
-        return updates
+        try:
+            commits = list(repo.get_commits(since=since)[:self.max_items])
+            updates = [
+                {
+                    'type': 'commit',
+                    'id': commit.sha,
+                    'title': commit.commit.message.split('\n')[0] if commit.commit.message else '',
+                    'message': commit.commit.message or '',
+                    'author': commit.commit.author.name if commit.commit.author else 'Unknown',
+                    'date': commit.commit.author.date if commit.commit.author else datetime.now(timezone.utc),
+                    'url': commit.html_url
+                }
+                for commit in commits
+                if commit.commit.author and commit.commit.author.date >= since
+            ]
+            logger.info(f"Found {len(updates)} new commits")
+            return updates
+        except Exception as e:
+            logger.error(f"Error fetching commits: {e}")
+            return []
         
     async def _get_issue_updates(
         self,
@@ -170,6 +174,6 @@ class GitHubClient:
         return updates
         
     def __del__(self):
-        """清理资源"""
+        """清��资源"""
         if hasattr(self, 'github'):
             self.github.close() 
