@@ -1,88 +1,155 @@
 # GitHub Sentinel
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![GitHub API](https://img.shields.io/badge/GitHub-API%20v3-green.svg)](https://docs.github.com/en/rest)
+GitHub Sentinel is an intelligent GitHub repository monitoring tool that helps you track repository updates, generate reports, and provides AI-driven analysis.
 
-GitHub Sentinel is an intelligent GitHub repository monitoring tool that automatically tracks and summarizes updates from your favorite open source projects. Whether it's code changes, issue discussions, or version releases, GitHub Sentinel provides timely and accurate information aggregation, ensuring you never miss important updates.
+## Features
 
-## ✨ Features
+- 🔍 Smart Repository Tracking
+  - Commits
+  - Issues
+  - Pull Requests
+  - Releases
+- 📊 Data Aggregation & Analysis
+  - Automatic Daily Progress Reports
+  - AI-Powered Report Summaries and Analysis
+- 📱 Multi-Channel Notifications
+  - Email Notifications
+  - Slack Integration
+- 📝 Flexible Report Formats
+  - Markdown
+  - HTML
 
-- 🔄 **Smart Tracking**: Automatically monitor repository commits, issues, pull requests, and releases
-- 📊 **Data Aggregation**: Intelligently aggregate updates from multiple repositories and generate clear statistical reports
-- 🔔 **Multi-channel Notifications**: Support for email, Slack, and other notification methods to ensure timely updates
-- 📝 **Flexible Reporting**: Support for both Markdown and HTML format reports
-- 🎯 **Precise Subscriptions**: Configure different tracking items for different repositories
-- 💾 **History Records**: Local storage of update history with query and statistical analysis support
+## Technical Architecture
 
-## 🚀 Use Cases
+- Python 3.8+
+- GitHub API v3
+- OpenAI GPT API
+- SQLite/PostgreSQL
 
-- Open source project maintainers tracking dependency updates
-- Teams monitoring related project progress
-- Tech enthusiasts following interesting open source projects
-- Project managers collecting and analyzing project activity data
+## Quick Start
 
-## 🛠 Technical Architecture
-
-- Python 3.8+ environment
-- GitHub API v3 integration
-- SQLite/PostgreSQL data persistence
-- Asynchronous processing and scheduled tasks
-- Modular design for easy extension
-
-## 📦 Quick Start
-
-1. Clone the repository
+1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/github-sentinel.git
 cd github-sentinel
 ```
 
-2. Install dependencies
+2. Create and activate virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+.\venv\Scripts\activate  # Windows
+```
+
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Configure
-- Copy `config/config.example.yaml` to `config/config.yaml`
-- Set up your GitHub API token and other configurations
+4. Configure the project:
+   - Copy the example configuration file:
+     ```bash
+     cp config/config.example.yaml config/config.yaml
+     ```
+   - Edit `config/config.yaml` to set:
+     - GitHub API token
+     - OpenAI API key (for AI report generation)
+     - Repository list to monitor
+     - Notification settings
 
-4. Run
+5. Run the project:
 ```bash
 python src/main.py
 ```
 
-## ⚙️ Configuration
+## Configuration Guide
 
-The configuration file is located at `config/config.yaml` and includes:
-- GitHub API configuration (token, API version, etc.)
-- Repository subscription list and tracking items
-- Notification settings (email, Slack)
-- Update check frequency and report format
-
-## 📊 Report Examples
-
-### Markdown Format
-```markdown
-# GitHub Repository Updates
-Generated at: 2024-01-20 10:00:00
-
-## Statistics
-- Commits: 12 updates
-- Pull Requests: 5 updates
-- Issues: 8 updates
-- Releases: 1 update
+### GitHub Configuration
+```yaml
+github:
+  api_token: "your-github-token"
+  api_version: "2022-11-28"
 ```
 
-### HTML Format
-- Beautiful web interface
-- Interactive statistics charts
-- Responsive design for mobile devices
+### LLM Configuration (for AI Report Generation)
+```yaml
+llm:
+  type: "openai"
+  openai:
+    api_key: "your-openai-api-key"
+    model: "gpt-3.5-turbo"
+```
 
-## 🤝 Contributing
+### Database Configuration
+```yaml
+database:
+  type: "sqlite"  # or "postgresql"
+  path: "data/sentinel.db"  # sqlite path
+  # postgresql_url: "postgresql://user:password@localhost:5432/dbname"
+```
 
-Contributions are welcome! Please check out our [CONTRIBUTING.md](CONTRIBUTING.md) to learn how to participate in the project.
+### Subscription Settings
+```yaml
+subscriptions:
+  update_interval: "daily"  # or "weekly"
+  check_time: "09:00"
+  repositories:
+    - owner: "owner-name"
+      repo: "repo-name"
+      track:
+        - "commits"
+        - "issues"
+        - "pull_requests"
+        - "releases"
+```
 
-## 📄 License
+## Usage Guide
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+Available commands in the interactive shell:
+
+- `help` - Display help information
+- `check` - Check updates immediately
+- `watch` - Start background monitoring service
+- `stop` - Stop monitoring service
+- `progress [owner/repo]` - Generate repository progress report
+- `summarize` - Generate AI summary report
+- `status` - Show current status
+- `config` - Configuration management
+- `repo` - Repository management
+- `exit` - Exit program
+
+## Report Examples
+
+### Daily Progress Report
+```markdown
+# Daily Progress Report - 2024-01-01
+Repository: owner/repo
+
+## Statistics
+- New Commits: 5
+- Updated Issues: 3
+- Updated Pull Requests: 2
+
+## Details
+...
+```
+
+### AI Summary Report
+```markdown
+# Project Daily Summary - 2024-01-01
+Repository: owner/repo
+
+## Overview
+[AI-generated project overview]
+
+## Key Updates
+[Important update summary]
+
+## Analysis & Recommendations
+[AI analysis and suggestions]
+```
+
+## License
+
+[MIT License](LICENSE) 
