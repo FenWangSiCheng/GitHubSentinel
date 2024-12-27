@@ -1,6 +1,6 @@
 from typing import Dict, List, Any
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 import jinja2
 from pathlib import Path
@@ -182,3 +182,92 @@ class ReportGenerator:
             f"**Type:** {'Pre-release' if release['is_prerelease'] else 'Release'}\n\n",
             f"{release['body']}\n\n" if release['body'] else "\n"
         ] 
+
+    def generate_daily_progress_report(self, progress_data: Dict[str, Any]) -> str:
+        """
+        生成每日进展报告
+        
+        Args:
+            progress_data: 每日进展数据
+            
+        Returns:
+            str: Markdown格式的报告
+        """
+        report = []
+        
+        # 添加标题
+        report.append(f"# Daily Progress Report - {progress_data['repository']}\n")
+        report.append(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        report.append(f"Period: {progress_data['since'].strftime('%Y-%m-%d %H:%M:%S')} to {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        
+        # 添加统计信息
+        report.append("## Statistics\n")
+        report.append(f"- Issues: {len(progress_data['issues'])} updates\n")
+        report.append(f"- Pull Requests: {len(progress_data['pull_requests'])} updates\n\n")
+        
+        # 添加Issues详情
+        if progress_data['issues']:
+            report.append("## Issues\n")
+            for issue in progress_data['issues']:
+                status = "🟢 Open" if issue['state'] == 'open' else "🔴 Closed"
+                report.append(f"### #{issue['number']} - [{issue['title']}]({issue['url']})\n")
+                report.append(f"**Status:** {status}  \n")
+                report.append(f"**Author:** {issue['author']}  \n")
+                report.append(f"**Created:** {issue['created_at'].strftime('%Y-%m-%d %H:%M:%S')}  \n")
+                report.append(f"**Updated:** {issue['updated_at'].strftime('%Y-%m-%d %H:%M:%S')}  \n")
+                if issue['labels']:
+                    report.append(f"**Labels:** {', '.join(issue['labels'])}  \n")
+                if issue['body']:
+                    report.append("\n<details><summary>Description</summary>\n\n")
+                    report.append(f"{issue['body']}\n")
+                    report.append("</details>\n")
+                report.append("\n")
+        
+        # 添加Pull Requests详情
+        if progress_data['pull_requests']:
+            report.append("## Pull Requests\n")
+            for pr in progress_data['pull_requests']:
+                status = "🟢 Merged" if pr['is_merged'] else ("🟡 Open" if pr['state'] == 'open' else "🔴 Closed")
+                report.append(f"### #{pr['number']} - [{pr['title']}]({pr['url']})\n")
+                report.append(f"**Status:** {status}  \n")
+                report.append(f"**Author:** {pr['author']}  \n")
+                report.append(f"**Created:** {pr['created_at'].strftime('%Y-%m-%d %H:%M:%S')}  \n")
+                report.append(f"**Updated:** {pr['updated_at'].strftime('%Y-%m-%d %H:%M:%S')}  \n")
+                report.append(f"**Branch:** `{pr['head']}` → `{pr['base']}`  \n")
+                if pr['body']:
+                    report.append("\n<details><summary>Description</summary>\n\n")
+                    report.append(f"{pr['body']}\n")
+                    report.append("</details>\n")
+                report.append("\n")
+        
+        return "".join(report)
+
+    def save_daily_progress_report(self, progress_data: Dict[str, Any], output_dir: str = "reports") -> str:
+        """
+        生成并保存每日进展报告
+        
+        Args:
+            progress_data: 每日进展数据
+            output_dir: 输出目录
+            
+        Returns:
+            str: 保存的文件路径
+        """
+        # 确保输出目录存在
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # 生成文件名
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        repo_name = progress_data['repository'].replace('/', '_')
+        filename = f"{repo_name}_progress_{date_str}.md"
+        filepath = os.path.join(output_dir, filename)
+        
+        # 生成报告内容
+        content = self.generate_daily_progress_report(progress_data)
+        
+        # 保存报告
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+            
+        logger.info(f"Daily progress report saved to {filepath}")
+        return filepath 

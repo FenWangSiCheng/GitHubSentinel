@@ -117,6 +117,55 @@ class GitHubSentinelShell(cmd.Cmd):
         """Exit on Ctrl-D"""
         return self.do_exit(arg)
         
+    def do_progress(self, arg):
+        """Generate daily progress report for repositories
+        Usage:
+            progress [owner/repo]  # Generate report for specific repository
+            progress              # Generate reports for all subscribed repositories
+        """
+        args = shlex.split(arg)
+        
+        async def generate_progress():
+            try:
+                if args:
+                    # 处理单个仓库
+                    repo_path = args[0]
+                    try:
+                        owner, repo = repo_path.split('/')
+                    except ValueError:
+                        print("Error: Repository should be in format 'owner/repo'")
+                        return
+                        
+                    print(f"\nGenerating progress report for {owner}/{repo}...")
+                    # 获取进展数据
+                    progress_data = await self.sentinel.github_client.get_daily_progress(owner, repo)
+                    
+                    print("Generating report...")
+                    # 生成并保存报告
+                    filepath = self.sentinel.report_generator.save_daily_progress_report(progress_data)
+                    print(f"Daily progress report generated: {filepath}")
+                    
+                else:
+                    # 处理所有订阅的仓库
+                    repositories = self.sentinel.subscription_manager.get_subscriptions()
+                    print(f"\nGenerating progress reports for {len(repositories)} repositories...")
+                    
+                    for repo_info in repositories:
+                        print(f"\nProcessing {repo_info['owner']}/{repo_info['repo']}...")
+                        progress_data = await self.sentinel.github_client.get_daily_progress(
+                            repo_info['owner'],
+                            repo_info['repo']
+                        )
+                        print("Generating report...")
+                        filepath = self.sentinel.report_generator.save_daily_progress_report(progress_data)
+                        print(f"Report generated: {filepath}")
+                        
+            except Exception as e:
+                print(f"Error generating progress report: {e}")
+                logger.error(f"Error generating progress report: {e}")
+                
+        asyncio.run(generate_progress())
+        
     async def _watch_service(self):
         """Watch service implementation"""
         try:
