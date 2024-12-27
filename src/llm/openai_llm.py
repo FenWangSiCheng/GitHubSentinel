@@ -3,6 +3,8 @@ from typing import Dict, Any, List, Optional
 import tiktoken
 from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat import ChatCompletion
+import tenacity
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .base import LLMBase
 
@@ -22,11 +24,20 @@ class OpenAILLM(LLMBase):
         self.client = AsyncOpenAI(
             api_key=config['api_key'],
             organization=config.get('organization'),
-            base_url=config.get('base_url', 'https://api.openai.com/v1')
+            base_url=config.get('base_url', 'https://api.openai.com/v1'),
+            timeout=30.0  # 设置超时时间为 30 秒
         )
         self.model = config.get('model', 'gpt-4')
         self.encoding = tiktoken.encoding_for_model(self.model)
         
+    @retry(
+        stop=stop_after_attempt(2),  # 最多重试2次
+        wait=wait_exponential(multiplier=2, min=10, max=30),  # 指数退避：10-30秒
+        retry=tenacity.retry_if_exception_type((TimeoutError, ConnectionError)),
+        before_sleep=lambda retry_state: logger.warning(
+            f"Retrying API call after {retry_state.next_action.sleep} seconds..."
+        )
+    )
     async def chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -72,7 +83,13 @@ class OpenAILLM(LLMBase):
                 }
                 
         except Exception as e:
-            logger.error(f"Error in chat completion: {e}")
+            logger.error(f"Error in chat completion: {str(e)}")
+            if "429" in str(e):
+                logger.warning("Rate limit exceeded, implementing exponential backoff...")
+                raise ConnectionError("Rate limit exceeded")
+            elif "timeout" in str(e).lower():
+                logger.warning("Request timeout, will retry with backoff...")
+                raise TimeoutError("Request timeout")
             raise
             
     async def embeddings(
