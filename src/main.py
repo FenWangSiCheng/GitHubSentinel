@@ -18,6 +18,7 @@ from subscription_manager import SubscriptionManager
 from update_tracker import UpdateTracker
 from notification_service import NotificationService
 from report_generator import ReportGenerator
+from report_generator_ai import AIReportGenerator
 
 # 设置日志
 logging.basicConfig(
@@ -166,6 +167,23 @@ class GitHubSentinelShell(cmd.Cmd):
                 
         asyncio.run(generate_progress())
         
+    def do_summarize(self, arg):
+        """Generate AI summary reports for today's progress reports
+        Usage:
+            summarize  # Generate summary reports for all today's progress reports
+        """
+        async def generate_summaries():
+            try:
+                print("\nGenerating AI summary reports...")
+                await self.sentinel.ai_report_generator.process_daily_reports()
+                print("Summary reports generated successfully.")
+                
+            except Exception as e:
+                print(f"Error generating summary reports: {e}")
+                logger.error(f"Error generating summary reports: {e}")
+                
+        asyncio.run(generate_summaries())
+        
     async def _watch_service(self):
         """Watch service implementation"""
         try:
@@ -191,6 +209,7 @@ class GitHubSentinel:
         self.update_tracker = UpdateTracker(self.config['database'])
         self.notification_service = NotificationService(self.config['notifications'])
         self.report_generator = ReportGenerator(self.config['reports'])
+        self.ai_report_generator = AIReportGenerator(self.config)
 
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """加载配置文件"""

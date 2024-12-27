@@ -1,52 +1,56 @@
 # GitHub API Configuration
 github:
-  api_token: "your_github_token_here"
+  api_token: "your-github-token"
   api_version: "2022-11-28"
+
+# LLM Configuration
+llm:
+  type: "openai" # 当前支持: openai
+  openai:
+    api_key: "your-openai-api-key"
+    organization: "your-org-id" # 可选
+    model: "gpt-4" # 默认使用 gpt-4
+    base_url: "https://api.openai.com/v1" # 可选，用于自定义 API 端点
 
 # Database Configuration
 database:
-  type: "sqlite"  # or "postgresql"
-  path: "data/sentinel.db"  # for sqlite
+  type: "sqlite" # or "postgresql"
+  path: "data/sentinel.db" # for sqlite
   # postgresql_url: "postgresql://user:password@localhost:5432/dbname"  # for postgresql
 
 # Subscription Settings
 subscriptions:
-  update_interval: "daily"  # or "weekly"
-  check_time: "09:00"  # 24-hour format
+  update_interval: "daily" # or "weekly"
+  check_time: "09:00" # 24-hour format
   repositories:
-    - owner: "owner1"
-      repo: "repo1"
+    - owner: "example"
+      repo: "repo"
       track:
         - "commits"
         - "issues"
         - "pull_requests"
         - "releases"
-    - owner: "owner2"
-      repo: "repo2"
-      track:
-        - "commits"
-        - "issues"
 
 # Notification Settings
 notifications:
   email:
-    enabled: true
+    enabled: false
     smtp_server: "smtp.gmail.com"
     smtp_port: 587
-    username: "your_email@gmail.com"
-    password: "your_app_password"
+    username: "your-email@gmail.com"
+    password: "your-app-password"
     recipients:
       - "recipient1@example.com"
       - "recipient2@example.com"
-  
+
   slack:
     enabled: false
-    webhook_url: "your_slack_webhook_url"
+    webhook_url: "your-slack-webhook-url"
     channel: "#github-updates"
 
 # Report Generation
 reports:
-  format: "markdown"  # or "html"
+  format: "markdown" # or "html"
   include_statistics: true
   max_items_per_section: 10
   sections:
@@ -59,5 +63,5 @@ reports:
 logging:
   level: "INFO"
   file: "logs/sentinel.log"
-  max_size: 10  # MB
-  backup_count: 5 
+  max_size: 10 # MB
+  backup_count: 5
