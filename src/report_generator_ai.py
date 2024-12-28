@@ -43,8 +43,7 @@ class AIReportGenerator:
             messages = [
                 {
                     "role": "system",
-                    "content": """你是一个专业的技术项目经理，负责生成项目的每日报告。
-请你用正式的语气，将提供的GitHub项目进展整理成一份简洁但信息完整的每日报告。
+                    "content": """你是一个专业的技术项目经理，负责生成项目的每日报告。请你用正式的语气，将提供的GitHub项目进展整理成一份简洁但信息完整的每日报告。
 
 报告应该包含以下部分：
 1. 报告标题和基本信息（日期、项目名称等）
@@ -54,6 +53,7 @@ class AIReportGenerator:
 5. 下一步工作建议
 
 请注意：
+- 使用中文
 - 使用专业的项目管理语言
 - 重点突出重要的更新和变化
 - 对问题进行分类和优先级排序
@@ -88,23 +88,35 @@ class AIReportGenerator:
             # 获取今天的日期
             today = datetime.now().strftime("%Y-%m-%d")
             
+            # 使用正确的daily目录
+            daily_dir = os.path.join(reports_dir, "daily")
+            if not os.path.exists(daily_dir):
+                logger.error(f"Reports directory not found: {daily_dir}")
+                raise FileNotFoundError(f"Reports directory not found: {daily_dir}")
+            
             # 查找所有今天的进展报告
-            for filename in os.listdir(reports_dir):
+            found_reports = False
+            for filename in os.listdir(daily_dir):
                 if filename.endswith(f"progress_{today}.md"):
+                    found_reports = True
                     logger.info(f"Processing report: {filename}")
                     
                     # 生成 AI 总结报告
-                    progress_file = os.path.join(reports_dir, filename)
+                    progress_file = os.path.join(daily_dir, filename)
                     summary_content = await self.generate_daily_summary(progress_file)
                     
                     # 保存总结报告
                     summary_filename = filename.replace("progress", "summary")
-                    summary_file = os.path.join(reports_dir, summary_filename)
+                    summary_file = os.path.join(daily_dir, summary_filename)
                     
                     with open(summary_file, 'w', encoding='utf-8') as f:
                         f.write(summary_content)
                         
                     logger.info(f"Generated summary report: {summary_filename}")
+            
+            if not found_reports:
+                logger.error(f"No progress reports found for today ({today})")
+                raise FileNotFoundError(f"No progress reports found for today ({today})")
                     
         except Exception as e:
             logger.error(f"Error processing daily reports: {e}")

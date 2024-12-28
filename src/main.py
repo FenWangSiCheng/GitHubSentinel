@@ -9,6 +9,7 @@ import cmd
 import shlex
 from pathlib import Path
 from typing import Dict, Any, List, Optional
+from datetime import datetime
 
 import yaml
 from dotenv import load_dotenv
@@ -261,7 +262,17 @@ class GitHubSentinel:
             print(report)
             print("\n=== End of Report ===\n")
             
+            # 保存为进展报告文件
+            today = datetime.now().strftime("%Y-%m-%d")
+            reports_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'reports', 'daily')
+            os.makedirs(reports_dir, exist_ok=True)
+            
+            progress_file = os.path.join(reports_dir, f"progress_{today}.md")
+            with open(progress_file, 'w', encoding='utf-8') as f:
+                f.write(report)
+            
             logger.info(f"Update check completed. Found {len(updates)} updates total.")
+            logger.info(f"Progress report saved to: {progress_file}")
             
         except Exception as e:
             logger.error(f"Error during update check: {e}")
@@ -352,18 +363,27 @@ def main():
     # 加载环境变量
     load_dotenv()
     
-    # 获取配置文件路径
-    config_path = os.getenv('CONFIG_PATH', 'config/config.yaml')
+    # 解析命令行参数
+    parser = argparse.ArgumentParser(description='GitHub Sentinel - Repository Monitoring Tool')
+    parser.add_argument('--web', action='store_true', help='Launch web interface')
+    parser.add_argument('--config', default=os.getenv('CONFIG_PATH', 'config/config.yaml'),
+                       help='Path to config file')
+    args = parser.parse_args()
     
-    # 创建 Sentinel 实例
-    sentinel = GitHubSentinel(config_path)
-    
-    # 创建并启动交互式 shell
-    shell = GitHubSentinelShell(sentinel)
-    try:
-        shell.cmdloop()
-    except KeyboardInterrupt:
-        print("\nGoodbye!")
+    if args.web:
+        # 启动 Web 界面
+        from web_interface import launch_web_interface
+        launch_web_interface(args.config)
+    else:
+        # 创建 Sentinel 实例
+        sentinel = GitHubSentinel(args.config)
+        
+        # 创建并启动交互式 shell
+        shell = GitHubSentinelShell(sentinel)
+        try:
+            shell.cmdloop()
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
 
 if __name__ == '__main__':
     main() 
