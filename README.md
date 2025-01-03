@@ -18,6 +18,10 @@ GitHub Sentinel is an intelligent GitHub repository monitoring tool that helps y
 - 📝 Flexible Report Formats
   - Markdown
   - HTML
+- 🌐 Web Interface
+  - Interactive Dashboard
+  - Real-time Repository Monitoring
+  - Easy Configuration Management
 
 ## Technical Architecture
 
@@ -118,6 +122,22 @@ Available commands in the interactive shell:
 - `config` - Configuration management
 - `repo` - Repository management
 - `exit` - Exit program
+
+### Web Interface
+
+To start the web interface:
+
+```bash
+python src/main.py --web
+```
+
+The web interface will be available at `http://localhost:7860`. Features available through the web interface include:
+
+- Real-time repository monitoring dashboard
+- Interactive configuration management
+- Report generation and viewing
+- Repository status overview
+- AI-powered analysis and insights
 
 ## Report Examples
 
